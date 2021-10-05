@@ -2,16 +2,43 @@
 #![allow(unused_variables)]
 
 use serde::{Deserialize, Serialize};
+use serde_hex::{SerHex, StrictPfx};
+use serde_json;
 use std::io::prelude::*;
 use std::net::TcpListener;
 use std::thread;
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Block {
-    nonce: u32,
+struct Block(BlockHeaders, Box<[Transaction]>); // TODO: Add Block's ommers header info: `, Box<[BlockHeaders]>`
+
+#[derive(Serialize, Deserialize, Debug)]
+struct BlockHeaders {
+    #[serde(with = "SerHex::<StrictPfx>")]
+    parent_hash: [u8; 32],
+    // #[serde(with = "SerHex::<StrictPfx>")]
+    // ommers_hash: [u8; 32],
+    #[serde(with = "SerHex::<StrictPfx>")]
+    beneficiary: [u8; 32],
+    // #[serde(with = "SerHex::<StrictPfx>")]
+    // state_root: [u8; 32],
+    // #[serde(with = "SerHex::<StrictPfx>")]
+    // transactions_root: [u8; 32],
+    // #[serde(with = "SerHex::<StrictPfx>")]
+    // receipts_root: [u8; 32],
+    // #[serde(with = "SerHex::<StrictPfx>")]
+    // logs_bloom: [u8; 32],
+    difficulty: u32,
+    number: u32,
+    gas_limit: u32,
+    gas_price: u32,
     timestamp: f32,
-    transactions: Vec<Transaction>,
+    // extra_data: [u8; 32],
+    mix_hash: [u8; 32],
+    nonce: u64,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+struct BlockTransactions {}
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Transaction {
@@ -22,12 +49,13 @@ struct Transaction {
     value: u32,
     // TODO: This should actually be v, r, s
     // Yellow Paper: Page 4 and Appendix F
-    sender: u32,
+    #[serde(with = "SerHex::<StrictPfx>")]
+    sender: [u8; 32],
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 enum TransactionTo {
-    Address(String),
+    Address(#[serde(with = "SerHex::<StrictPfx>")] [u8; 20]),
     Empty,
 }
 
